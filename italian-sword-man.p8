@@ -26,10 +26,10 @@ function _update()
 	// handle player input
 	if btn(⬅️) then
 		plr.flipped=true
-		plr.dx=-plr.s
+		plr.dx=-plr.speed
 	elseif btn(➡️) then
 		plr.flipped=false
-		plr.dx=plr.s
+		plr.dx=plr.speed
 	else
 		plr.dx=0
 	end
@@ -65,15 +65,12 @@ function passed_wall()
 		-- find left x
 		local lc = (plr.x + 1) / 8
 		-- find bottom y
-		local bc = (plr.y + 7) / 8
 		-- find top y
 		local tc = (plr.y + 1) / 8
 
 		-- we assume delta x is low
 		-- enough that we don't phase
 		if(fget(mget(lc, tc), 0)) then
-			plr.dx = 0
-		elseif(fget(mget(lc, bc))) then
 			plr.dx = 0
 		end
 		
@@ -104,7 +101,7 @@ function _draw()
  -- draw the map
 	map()
 	-- draw the player
-	spr(5, plr.x, plr.y, 1, 1, plr.f)
+	spr(5, plr.x, plr.y, 1, 1, plr.flipped)
 end 
 
 __gfx__
