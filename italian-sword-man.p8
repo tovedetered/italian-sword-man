@@ -1,18 +1,23 @@
 pico-8 cartridge // http://www.pico-8.com
 version 42
 __lua__
-// player table
+-- player table
 plr={
+	-- x and y coords
  x=64,
  y=104,
+	-- delta x and y
  dx=0,
  dy=0,
- f=false,
- s=1,
- js=-5
+	-- direction player facing
+ flipped=false,
+	-- horizontal speed
+ speed=1,
+	-- jump force at start
+ jump_force=-5
 }
 
-// environment table
+-- environment table
 env={
  g=0.5
 }
@@ -20,17 +25,17 @@ env={
 function _update()
 	// handle player input
 	if btn(⬅️) then
-		plr.f=true
+		plr.flipped=true
 		plr.dx=-plr.s
 	elseif btn(➡️) then
-		plr.f=false
+		plr.flipped=false
 		plr.dx=plr.s
 	else
 		plr.dx=0
 	end
 	
 	
-	// handle collision / jumping
+	-- handle collision / jumping
 	
 	if on_ground() then
 	 plr.dy=0
@@ -40,14 +45,44 @@ function _update()
 	else
 	 plr.dy+=env.g
 	end
+
+	passed_wall()
 	
-	// move player
+	-- move player
 	plr.x+=plr.dx
 	plr.y+=plr.dy
-	
 end
 
-// check if on ground
+function passed_wall()
+	if (plr.flipped) then
+		-- negative dir travel
+		-- find top and bottom left
+		-- check to see if that line
+		-- passed a wall
+		-- if so then we bound dir
+		-- to that wall
+
+		-- find left x
+		local lc = (plr.x + 1) / 8
+		-- find bottom y
+		local bc = (plr.y + 7) / 8
+		-- find top y
+		local tc = (plr.y + 1) / 8
+
+		-- we assume delta x is low
+		-- enough that we don't phase
+		if(fget(mget(lc, tc), 0)) then
+			plr.dx = 0
+		elseif(fget(mget(lc, bc))) then
+			plr.dx = 0
+		end
+		
+	else
+		-- positive dir travel
+	end
+end
+
+-- check if on ground
 function on_ground()
 	local gx1=plr.x/8
 	local gx2=(plr.x+8)/8
@@ -64,11 +99,11 @@ function on_ground()
 end
 
 function _draw()
- // update camera
+ -- update camera
  camera(max(0, plr.x-64), 0)
- // draw the map
+ -- draw the map
 	map()
-	// draw the player
+	-- draw the player
 	spr(5, plr.x, plr.y, 1, 1, plr.f)
 end 
 
