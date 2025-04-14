@@ -36,11 +36,10 @@ function _update()
 	
 	
 	-- handle collision / jumping
-	
 	if on_ground() then
 	 plr.dy=0
 	 if btn(🅾️) then
-	  plr.dy=plr.js
+	  plr.dy=plr.jump_force
 	 end
 	else
 	 plr.dy+=env.g
@@ -50,7 +49,24 @@ function _update()
 	
 	-- move player
 	plr.x+=plr.dx
+	if (plr.dy > 0) then
+	 fix_fall()
+	end
 	plr.y+=plr.dy
+end
+
+function fix_fall()
+	local gx1=plr.x/8
+	local gx2=(plr.x+8)/8
+	local gy=(plr.y+7+plr.dy)/8
+	
+	local a=fget(mget(gx1,gy),0)
+	local b=fget(mget(gx2,gy),0)
+	
+	if a or b then
+	 plr.dy -= 1
+	 fix_fall()
+	end
 end
 
 function passed_wall()
@@ -76,6 +92,17 @@ function passed_wall()
 		
 	else
 		-- positive dir travel
+		-- find right x
+		local rc = (plr.x + 6) / 8
+		-- find bottom y
+		-- find top y
+		local tc = (plr.y + 1) / 8
+
+		-- we assume delta x is low
+		-- enough that we don't phase
+		if(fget(mget(rc, tc), 0)) then
+			plr.dx = 0
+		end
 	end
 end
 
@@ -86,7 +113,7 @@ function on_ground()
 	local gy=(plr.y+8)/8
 	
 	local a=fget(mget(gx1,gy),0)
-	local c=fget(mget(gx2,gy),0)
+	local b=fget(mget(gx2,gy),0)
 	
 	if a or b then
 	 return true
