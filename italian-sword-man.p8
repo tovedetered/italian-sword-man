@@ -204,25 +204,6 @@ function solid(x, y)
  return fget(mget(x/8, y/8),0)
 end
 
--- check if player will collide
--- with wall
-function wall_collision()
-if (plr.flipped) then
-		local x = (plr.x + 2 + plr.dx) / 8
-		local y = (plr.y) / 8
-		if solid(x, y) then
-			return true
-		end
-	else
-		local x = (plr.x + 5 + plr.dx) / 8
-		local y = (plr.y) / 8
-		if solid(x, y) then
-			return true
-		end
-	end
-	return false
-end
-
 -- moves and collide enemies
 -- this includes colliding with
 -- the player and taking damage
