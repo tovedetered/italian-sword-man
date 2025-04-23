@@ -71,8 +71,12 @@ function _update()
 	-- player movement / collision
 	move_and_collide_player()
 	-- enemy movement / collision
-	move_and_collide_enemy(enemy_1)
-	move_and_collide_enemy(enemy_2)
+	for i = 1, level_1.num_enemies do
+		enmy = level_1.enemies[i]
+		if (not enmy.dead) then
+		move_and_collide_enemy(enmy)
+		end
+	end
 end
 
 function _draw()
