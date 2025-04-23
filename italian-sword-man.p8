@@ -25,7 +25,8 @@ plr={
  passive_sprite=5,
  first_attack_frame=6,
  last_attack_frame=7,
- attack_timer=0
+ attack_timer=0,
+ jumping=false
 }
 
 -- environment table
@@ -36,37 +37,41 @@ env={
  wait_time=0
 }
 
--- enemy_1 table
-enemy_1={
+
+level_1 = {
+	enemies = {{
 	x=120,
 	y=104,
 	dx=1,
 	sprite=8,
 	flipped=false,
 	dead=false
-}
-
--- enemy_2 table
-enemy_2={
+},{
 	x=312,
 	y=104,
 	dx=1,
 	sprite=8,
 	flipped=false,
 	dead=false
+},},
+	num_enemies = 2,
 }
+
 -->8
 -- update & draw
 
 function _update()
-	check_player_walk()
-	check_ground_collision()
-	check_wall_collision()
-	check_player_jump()
-	check_player_attack()
-	move_player()
-	move_and_collide_enemy(enemy_1)
-	move_and_collide_enemy(enemy_2)
+ -- input
+	player_input()
+	-- player movement / collision
+	move_and_collide_player()
+	-- enemy movement / collision
+	for i = 1, level_1.num_enemies do
+		enmy = level_1.enemies[i]
+		if (not enmy.dead) then
+		move_and_collide_enemy(enmy)
+		end
+	end
 end
 
 function _draw()
@@ -77,19 +82,26 @@ function _draw()
 	-- draw the player
 	spr(plr.sprite, plr.x, plr.y, 1, 1, plr.flipped)
 	-- draw enemies
-	if (not enemy_1.dead) then
-	 spr(enemy_1.sprite, enemy_1.x,enemy_1.y,1,1,enemy_1.flipped)
+	-- for now we are only using
+	-- level 1
+	for i = 1, level_1.num_enemies do
+		enmy = level_1.enemies[i]
+		if (not enmy.dead) then
+		 spr(enmy.sprite,enmy.x,enmy.y,1,1,enmy.flipped)
+		end
 	end
-	if (not enemy_2.dead) then
-	 spr(enemy_2.sprite, enemy_2.x,enemy_2.y,1,1,enemy_2.flipped)
- end
+	 print(plr.dy, plr.x, 0)
 end 
 
 
 -->8
 -- collision & physics
 
-function check_player_walk()
+-- check if player is walking
+-- and update player dx 
+-- accordingly if they are
+function player_input()
+ -- horizontal movement input
  if btn(⬅️) then
 		plr.flipped=true
 		plr.dx=-plr.speed
@@ -99,108 +111,14 @@ function check_player_walk()
 	else
 		plr.dx=0
 	end
-end
-
-function check_player_jump()
-	if on_ground() and btn(🅾️) then
+	
+	-- vertical movement input
+	if not plr.jumping and btn(🅾️) then
 	 plr.dy=plr.jump_force
-	end
-end
-
-function move_player()
-	-- move player
-	plr.x+=plr.dx
-	if (plr.dy > 0) then
-	 fix_fall()
-	end
-	plr.y+=plr.dy
-end
-
-function fix_fall()
-	local gx1=plr.x/8
-	local gx2=(plr.x+8)/8
-	local gy=(plr.y+7+plr.dy)/8
-	
-	local a=fget(mget(gx1,gy),0)
-	local b=fget(mget(gx2,gy),0)
-	
-	if a or b then
-	 plr.y -= 1
-	 fix_fall()
-	end
-end
-
--- check if on ground
-function on_ground()
- local gx1=0
- local gx2=0
- local gy=0
- if not plr.flipped then
- 	gx1 = plr.x/8
- 	gx2 = (plr.x+5)/8
- 	gy = (plr.y+8)/8
- else
-	 gx1=(plr.x+2)/8
-	 gx2=(plr.x+7)/8
-	 gy=(plr.y+8)/8
+		plr.jumping = true
 	end
 	
-	local a=fget(mget(gx1,gy),0)
-	local b=fget(mget(gx2,gy),0)
-	
-	if a or b then
-	 return true
-	else
-	 return false
-	end
-end
-
-function check_wall_collision()
-	if (plr.flipped) then
-		-- negative dir travel
-		-- find top and bottom left
-		-- check to see if that line
-		-- passed a wall
-		-- if so then we bound dir
-		-- to that wall
-
-		-- find left x
-		local lc = (plr.x + 1) / 8
-		-- find bottom y
-		-- find top y
-		local tc = (plr.y + 1) / 8
-
-		-- we assume delta x is low
-		-- enough that we don't phase
-		if(fget(mget(lc, tc), 0)) then
-			plr.dx = 0
-		end
-		
-	else
-		-- positive dir travel
-		-- find right x
-		local rc = (plr.x + 6) / 8
-		-- find bottom y
-		-- find top y
-		local tc = (plr.y + 1) / 8
-
-		-- we assume delta x is low
-		-- enough that we don't phase
-		if(fget(mget(rc, tc), 0)) then
-			plr.dx = 0
-		end
-	end
-end
-
-function check_ground_collision()
-	if on_ground() then
-	 plr.dy=0
-	else
-		plr.dy+=env.g
-	end
-end
-
-function check_player_attack()
+	-- attack input
 	if plr.attacking then
 		if plr.attack_timer < plr.attack_speed then
 			plr.attack_timer+=1
@@ -219,7 +137,72 @@ function check_player_attack()
 	end
 end
 
--- move and collide enemies
+-- move the player based on
+-- their dx and dy
+function move_and_collide_player()
+	-- gravity
+	plr.dy += env.g
+
+	x_plr = {
+		left = plr.x + 1,
+		right = plr.x + 4,
+	}
+	y_plr = {
+		top = plr.y,
+		bottom =  plr.y + 8
+	}
+	if (plr.flipped) then
+	x_plr = {
+		left = plr.x + 3,
+		right = plr.x + 6,
+	}
+end
+	-- player is 8 pixels tall
+hypox = {
+	left = x_plr.left + plr.dx,
+	right = x_plr.right + plr.dx,
+}
+hypoy = {
+	top = y_plr.top + plr.dy,
+	bottom = y_plr.bottom + plr.dy,
+}
+
+-- check bottom edge
+if (solid(x_plr.left, hypoy.bottom - 1) or solid(x_plr.right, hypoy.bottom - 1)) then
+	plr.dy = 0
+	plr.jumping = false
+end
+-- check top edge todo:
+
+-- check right edge
+if (solid(x_plr.right + 1, hypoy.bottom - 2) or solid(x_plr.right + 1, hypoy.top - 2)) then
+	if(plr.dx > 0) then
+	plr.dx = 0
+end
+end
+
+-- check left edge
+if (solid(x_plr.left - 1, hypoy.bottom -2) or solid(x_plr.left - 1, hypoy.top -2)) then
+	if(plr.dx < 0) then
+	 plr.dx = 0
+end
+end
+
+
+plr.y = plr.y + plr.dy
+plr.x = plr.x + plr.dx
+end
+
+-- check if a given (x, y)
+-- coordinate is located in 
+-- a solid
+function solid(x, y)
+ return fget(mget(x/8, y/8),0)
+end
+
+-- moves and collide enemies
+-- this includes colliding with
+-- the player and taking damage
 function move_and_collide_enemy(e)
  if (not e.dead) then
 	 -- move & collide with wallls
@@ -247,10 +230,10 @@ function move_and_collide_enemy(e)
 	 	local pax2=0
 	 	if plr.flipped then
 	 		pax2 = plr.x+7
-	 		pax1 = plr.x-16
+	 		pax1 = plr.x-8
 	 	else
 	 		pax1 = plr.x
-	 		pax2 = plr.x+24
+	 		pax2 = plr.x+16
 	 	end
 	 	local ecx1=e.x
 	  local ecx2=(e.x+7)
@@ -313,13 +296,13 @@ __gfx__
 000000004444444444444444cccccccc5dddddd6f8888400f8888400f888847706667770cccccccc7777cccccccccccccccccccccccccccccccccccc77777777
 000000004444444444444444cccccccc555555dd0f00f0000f00f0000f00f00000777700cccccccccc77cccccccccccccccccccccccccccccccccccc77777777
 6777777777777776cccccc7777cccccc777777770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-6777777777777776cccc77777777cccc777777770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-c67777777777776cccc7777777777ccc777777770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-c67777777777776ccc777777777777cc777777770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-cc677777777776ccc77777777777777c777777770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-ccc6777777776cccc77777777777777c777777770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-cccc66777766cccc7777777777777777777777770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-cccccc6666cccccc7777777777777777666666660000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+6777777777777776cccc77777777cccc777777770444400000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c67777777777776cccc7777777777ccc7777777704fff40000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c67777777777776ccc777777777777cc777777770f1f100000000000000000000000000000000000000000000000000000000000000000000000000000000000
+cc677777777776ccc77777777777777c777777770ffff70000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ccc6777777776cccc77777777777777c777777770222270000000000000000000000000000000000000000000000000000000000000000000000000000000000
+cccc66777766cccc777777777777777777777777f888840000000000000000000000000000000000000000000000000000000000000000000000000000000000
+cccccc6666cccccc77777777777777776666666600ff000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
