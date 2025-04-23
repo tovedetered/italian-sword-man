@@ -162,15 +162,8 @@ function move_and_collide_player()
 	-- vertical collisions
 	if not floor_or_ceiling_collision() then
 	 plr.y += plr.dy
-	else
-	 if plr.dy > 0 then
-	  plr.on_ground = true
-	 end
-	 -- implement function that
-	 -- ajusts dy to not put the
-	 -- player in a boundry rather
-	 -- than set it to 0
-	 plr.dy = 0
+	else 
+
 	end
 end
 
@@ -200,16 +193,32 @@ if (plr.flipped) then
 	return false
 end
 
+function wall_collisionxy(x, y)
+if (plr.flipped) then
+		local x = (x + 2) / 8
+		local y = (y) / 8
+		if solid(x, y) then
+			return true
+		end
+	else
+		local x = (x + 5) / 8
+		local y = (y) / 8
+		if solid(x, y) then
+			return true
+		end
+	end
+	return false
+end
+
 -- check if player will collide
 -- with floor or ceiling
 function floor_or_ceiling_collision()
- -- plan for function:
- -- check if the player will
- -- collide with the floor or
- -- ceiling after dy is applied
- -- if so, change dy so the
- -- player will stop just
- -- before colliding
+	-- player will *never* jump more than
+	-- a tile in one frame
+	-- becasue of this we can assume
+	-- that the player will not phase
+	hypoy = plr.y + plr.dy
+	hypox = plr.x + plr.dx
  return true
 end
 
