@@ -56,6 +56,12 @@ enemy_2={
 	flipped=false,
 	dead=false
 }
+
+level_1 = {
+	enemies = {enemy_1, enemy_2},
+	num_enemies = 2,
+}
+
 -->8
 -- update & draw
 
@@ -77,13 +83,15 @@ function _draw()
 	-- draw the player
 	spr(plr.sprite, plr.x, plr.y, 1, 1, plr.flipped)
 	-- draw enemies
-	if (not enemy_1.dead) then
-	 spr(enemy_1.sprite, enemy_1.x,enemy_1.y,1,1,enemy_1.flipped)
+	-- for now we are only using
+	-- level 1
+	for i = 1, level_1.num_enemies do
+		enmy = level_1.enemies[i]
+		if (not enmy.dead) then
+		 spr(enmy.sprite,enmy.x,enmy.y,1,1,enmy.flipped)
+		end
 	end
-	if (not enemy_2.dead) then
-	 spr(enemy_2.sprite, enemy_2.x,enemy_2.y,1,1,enemy_2.flipped)
- end
- print(plr.dy, plr.x, 0)
+	 print(plr.dy, plr.x, 0)
 end 
 
 
