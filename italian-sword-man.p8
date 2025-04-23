@@ -42,7 +42,8 @@ enemy_1={
 	y=104,
 	dx=1,
 	sprite=8,
-	flipped=false
+	flipped=false,
+	dead=false
 }
 
 -- enemy_2 table
@@ -51,7 +52,8 @@ enemy_2={
 	y=104,
 	dx=1,
 	sprite=8,
-	flipped=false
+	flipped=false,
+	dead=false
 }
 -->8
 -- update & draw
@@ -75,8 +77,12 @@ function _draw()
 	-- draw the player
 	spr(plr.sprite, plr.x, plr.y, 1, 1, plr.flipped)
 	-- draw enemies
-	spr(enemy_1.sprite, enemy_1.x,enemy_1.y,1,1,enemy_1.flipped)
-	spr(enemy_2.sprite, enemy_2.x,enemy_2.y,1,1,enemy_2.flipped)
+	if (not enemy_1.dead) then
+	 spr(enemy_1.sprite, enemy_1.x,enemy_1.y,1,1,enemy_1.flipped)
+	end
+	if (not enemy_2.dead) then
+	 spr(enemy_2.sprite, enemy_2.x,enemy_2.y,1,1,enemy_2.flipped)
+ end
 end 
 
 
@@ -215,36 +221,86 @@ end
 
 -- move and collide enemies
 function move_and_collide_enemy(e)
- -- move & collide with wallls
- if e.dx > 0 then
- 	if fget(mget((((e.x+8) / 8)),(e.y/8)),0) then
- 	 e.dx=-1
- 	 e.flipped=true
- 	else
- 		e.x+=e.dx
- 	end
- elseif e.dx < 0 then
- 	if fget(mget((((e.x-1) / 8)),(e.y/8)),0) then 
- 		e.dx=1
- 		e.flipped=false
- 	else
- 		e.x+=e.dx
- 	end
+ if (not e.dead) then
+	 -- move & collide with wallls
+	 if e.dx > 0 then
+	 	if fget(mget((((e.x+8) / 8)),(e.y/8)),0) then
+	 	 e.dx=-1
+	 	 e.flipped=true
+	 	else
+	 		e.x+=e.dx
+	 	end
+	 elseif e.dx < 0 then
+	 	if fget(mget((((e.x-1) / 8)),(e.y/8)),0) then 
+	 		e.dx=1
+	 		e.flipped=false
+	 	else
+	 		e.x+=e.dx
+	 	end
+	 end
+	 
+	 -- register being attacked by player
+	 if plr.attacking then
+	 	local pay1=plr.y-1
+	 	local pay2=plr.y+7
+	 	local pax1=0
+	 	local pax2=0
+	 	if plr.flipped then
+	 		pax2 = plr.x+7
+	 		pax1 = plr.x-16
+	 	else
+	 		pax1 = plr.x
+	 		pax2 = plr.x+24
+	 	end
+	 	local ecx1=e.x
+	  local ecx2=(e.x+7)
+	  local ecy1=e.y
+	  local ecy2=(e.y+7)
+	  local a = ecx1 >= pax1 and ecx1 <= pax2
+	  local b = ecx2 >= pax1 and ecx2 <= pax2
+	  local c = ecy1 >= pay1 and ecy1 <= pay2
+	  local d = ecy2 >= pay2 and ecy2 <= pay2
+	  if (a and c) or (a and d) or (b and c) or (b and d) then
+	  	e.dead = true
+	  end
+	 end
+	   		
+	 		
+	 	
+	 
+	 -- collide with player:
+	 -- setup enemy hitbox
+	 local ecx1=e.x
+	 local ecx2=(e.x+7)
+	 local ecy1=e.y
+	 local ecy2=(e.y+7)
+	 -- setup player hitbox
+	 local pcx1=plr.x
+	 local pcx2=(plr.x+7)
+	 local pcy1=plr.y
+	 local pcy2=(plr.y+7)
+	 if plr.flippped then
+	  pcx1=plr.x+2
+		 pcx2=plr.x+7
+		 pcy1=plr.y
+		 pcy2=plr.y+7
+	 else
+	 	pcx1 = plr.x
+	 	pcx2 = plr.x+5
+	 	pcy1 = plr.y
+	 	pcy2 = plr.y+7
+	 end
+	 -- check for collision with player
+	 local a = pcx1 >= ecx1 and pcx1 <= ecx2
+	 local b = pcx2 >= ecx1 and pcx2 <= ecx2
+	 local c = pcy1 >= ecy1 and pcy1 <= ecy2
+	 local d = pcy2 >= ecy1 and pcy2 <= ecy2
+	 
+	 if (a and c) or (a and d) or (b and c) or (b and d) then
+	 	plr.x = 64
+	 	plr.y = 104
+	 end
  end
- 
- -- collide with player:
- -- setup enemy hitbox
- local ecx1=e.x
- local ecx2=(e.x+7)
- local ecy1=e.y
- local ecy2=(e.y+7)
- -- setup player hitbox
- local pcx1=plr.x
- local pcx2=(plr.x+7)
- local pcy1=plr.y
- local pcy2=(plr.y+7)
- -- check for collision with player
- 
 end
  	
 __gfx__
