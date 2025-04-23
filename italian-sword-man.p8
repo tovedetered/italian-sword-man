@@ -143,10 +143,6 @@ function move_and_collide_player()
 	-- gravity
 	plr.dy += env.g
 
-	-- terminal velocity
-	if plr.dy > 2 then 
-	 plr.dy = 2 
-	end
 	x_plr = {
 		left = plr.x + 1,
 		right = plr.x + 4,
