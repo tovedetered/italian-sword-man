@@ -37,28 +37,23 @@ env={
  wait_time=0
 }
 
--- enemy_1 table
-enemy_1={
+
+level_1 = {
+	enemies = {{
 	x=120,
 	y=104,
 	dx=1,
 	sprite=8,
 	flipped=false,
 	dead=false
-}
-
--- enemy_2 table
-enemy_2={
+},{
 	x=312,
 	y=104,
 	dx=1,
 	sprite=8,
 	flipped=false,
 	dead=false
-}
-
-level_1 = {
-	enemies = {enemy_1, enemy_2},
+},},
 	num_enemies = 2,
 }
 
@@ -120,7 +115,7 @@ function player_input()
 	-- vertical movement input
 	if plr.on_ground and btn(🅾️) then
 	 plr.dy=plr.jump_force
-	 plr.on_ground=true
+	 plr.on_ground=false
 	end
 	
 	-- attack input
