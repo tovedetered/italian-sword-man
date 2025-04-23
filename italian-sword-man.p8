@@ -26,7 +26,7 @@ plr={
  first_attack_frame=6,
  last_attack_frame=7,
  attack_timer=0,
- on_ground=false
+ jumping=false
 }
 
 -- environment table
@@ -113,9 +113,9 @@ function player_input()
 	end
 	
 	-- vertical movement input
-	if plr.on_ground and btn(🅾️) then
+	if not plr.jumping and btn(🅾️) then
 	 plr.dy=plr.jump_force
-	 plr.on_ground=false
+		plr.jumping = true
 	end
 	
 	-- attack input
@@ -142,36 +142,66 @@ end
 function move_and_collide_player()
 	-- gravity
 	plr.dy += env.g
-	
+
 	-- terminal velocity
 	if plr.dy > 2 then 
 	 plr.dy = 2 
 	end
-	
-	-- horizontal collisions
-	if not wall_collision() then
-	 plr.x += plr.dx
-	else
-	 -- implement function that
-	 -- ajusts dx to not put the
-	 -- player in a boundry rather
-	 -- than set it to 0
-		plr.dx = 0
-	end
-	
-	-- vertical collisions
-	if not floor_or_ceiling_collision() then
-	 plr.y += plr.dy
-	else 
+	x_plr = {
+		left = plr.x + 1,
+		right = plr.x + 4,
+	}
+	y_plr = {
+		top = plr.y,
+		bottom =  plr.y + 8
+	}
+	if (plr.flipped) then
+	x_plr = {
+		left = plr.x + 3,
+		right = plr.x + 6,
+	}
+end
+	-- player is 8 pixels tall
+hypox = {
+	left = x_plr.left + plr.dx,
+	right = x_plr.right + plr.dx,
+}
+hypoy = {
+	top = y_plr.top + plr.dy,
+	bottom = y_plr.bottom + plr.dy,
+}
 
-	end
+-- check bottom edge
+if (solid(x_plr.left, hypoy.bottom - 1) or solid(x_plr.right, hypoy.bottom - 1)) then
+	plr.dy = 0
+	plr.jumping = false
+end
+-- check top edge todo:
+
+-- check right edge
+if (solid(x_plr.right + 1, hypoy.bottom - 2) or solid(x_plr.right + 1, hypoy.top - 2)) then
+	if(plr.dx > 0) then
+	plr.dx = 0
+end
+end
+
+-- check left edge
+if (solid(x_plr.left - 1, hypoy.bottom -2) or solid(x_plr.left - 1, hypoy.top -2)) then
+	if(plr.dx < 0) then
+	 plr.dx = 0
+end
+end
+
+
+plr.y = plr.y + plr.dy
+plr.x = plr.x + plr.dx
 end
 
 -- check if a given (x, y)
 -- coordinate is located in 
 -- a solid
 function solid(x, y)
- return fget(mget(x, y),0)
+ return fget(mget(x/8, y/8),0)
 end
 
 -- check if player will collide
@@ -191,35 +221,6 @@ if (plr.flipped) then
 		end
 	end
 	return false
-end
-
-function wall_collisionxy(x, y)
-if (plr.flipped) then
-		local x = (x + 2) / 8
-		local y = (y) / 8
-		if solid(x, y) then
-			return true
-		end
-	else
-		local x = (x + 5) / 8
-		local y = (y) / 8
-		if solid(x, y) then
-			return true
-		end
-	end
-	return false
-end
-
--- check if player will collide
--- with floor or ceiling
-function floor_or_ceiling_collision()
-	-- player will *never* jump more than
-	-- a tile in one frame
-	-- becasue of this we can assume
-	-- that the player will not phase
-	hypoy = plr.y + plr.dy
-	hypox = plr.x + plr.dx
- return true
 end
 
 -- moves and collide enemies
