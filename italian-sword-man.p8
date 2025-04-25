@@ -108,12 +108,14 @@ function _draw()
 	end
 	
 	local e = level_1.flying_enemy
-	if e.flipped then
-	 spr(e.sprite_2, e.x, e.y, 1, 1, e.flipped)
-	 spr(e.sprite_1, e.x+8, e.y, 1, 1, e.flipped)
-	else
-	 spr(e.sprite_1, e.x, e.y, 1, 1, e.flipped)
-	 spr(e.sprite_2, e.x+8, e.y, 1, 1, e.flipped)
+	if not e.dead then
+	 if e.flipped then
+	  spr(e.sprite_2, e.x, e.y, 1, 1, e.flipped)
+	  spr(e.sprite_1, e.x+8, e.y, 1, 1, e.flipped)
+	 else
+	  spr(e.sprite_1, e.x, e.y, 1, 1, e.flipped)
+	  spr(e.sprite_2, e.x+8, e.y, 1, 1, e.flipped)
+	 end
 	end
 end 
 
