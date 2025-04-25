@@ -35,7 +35,8 @@ env={
  g=0.3,
  start_time=0,
  wait_time=0,
- game_won=false
+ game_won=false,
+ game_win_sound_played=false
 }
 
 
@@ -61,8 +62,16 @@ level_1 = {
 	sprite=8,
 	flipped=false,
 	dead=false
- },},
- flying_enemy = {
+ },
+ {
+	x=640,
+	y=72,
+	dx=1,
+	sprite=8,
+	flipped=false,
+	dead=false
+ }},
+ flying_enemies = {{
 	 x=876,
 	 dx=1,
 	 y=40,
@@ -74,7 +83,19 @@ level_1 = {
 	 flap_timer=0,
 	 flap_speed=5,
 	 dead=false
-	},
+	},{
+	 x=742,
+	 dx=1,
+	 y=32,
+	 sprite_1=9,
+	 sprite_2=10,
+	 lx=728,
+	 rx=760,
+	 frame=0,
+	 flap_timer=0,
+	 flap_speed=5,
+	 dead=false
+	}},
 	boss = {
 	 x=992,
 	 dx=1,
@@ -84,6 +105,7 @@ level_1 = {
 	 sprite_3=48,
 	 sprite_4=49,
 	 dead=false,
+	 already_attacked_by_plr=false,
 	 hp=3
 	}
 }
@@ -93,21 +115,25 @@ level_1 = {
 -- update & draw
 
 function _update()
- -- input
-	player_input()
-	-- player movement / collision
-	move_and_collide_player()
-	-- enemy movement / collision
-	for i = 1, #level_1.ground_enemies do
-		ground_enemy = level_1.ground_enemies[i]
-		if (not ground_enemy.dead) then
-			move_and_collide_enemy(ground_enemy)
-		end
+ if not env.game_won then
+  -- input
+	 player_input()
+	 -- player movement / collision
+	 move_and_collide_player()
+	 -- enemy movement / collision
+	 for i = 1, #level_1.ground_enemies do
+		 ground_enemy = level_1.ground_enemies[i]
+		 if (not ground_enemy.dead) then
+			 move_and_collide_enemy(ground_enemy)
+		 end
+	 end
+	 for i = 1, #level_1.flying_enemies do
+	  local e = level_1.flying_enemies[i]
+	  move_and_collide_flying_enemy(e)
+	 end
+	 local b = level_1.boss
+	 move_and_collide_boss(b)
 	end
-	local e = level_1.flying_enemy
-	move_and_collide_flying_enemy(e)
-	local b = level_1.boss
-	move_and_collide_boss(b)
 end
 
 function _draw()
@@ -129,14 +155,16 @@ function _draw()
 	 end
 	
 	 -- draw flying enemies
-	 local e = level_1.flying_enemy
-	 if not e.dead then
-	  if e.flipped then
-	   spr(e.sprite_2, e.x, e.y, 1, 1, e.flipped)
-	   spr(e.sprite_1, e.x+8, e.y, 1, 1, e.flipped)
-	  else
-	   spr(e.sprite_1, e.x, e.y, 1, 1, e.flipped)
-	   spr(e.sprite_2, e.x+8, e.y, 1, 1, e.flipped)
+	 for i = 1, #level_1.flying_enemies do
+	  local e = level_1.flying_enemies[i]
+	  if not e.dead then
+	   if e.flipped then
+	    spr(e.sprite_2, e.x, e.y, 1, 1, e.flipped)
+	    spr(e.sprite_1, e.x+8, e.y, 1, 1, e.flipped)
+	   else
+	    spr(e.sprite_1, e.x, e.y, 1, 1, e.flipped)
+	    spr(e.sprite_2, e.x+8, e.y, 1, 1, e.flipped)
+	   end
 	  end
 	 end
 	
@@ -154,8 +182,13 @@ function _draw()
 	  spr(b.sprite_3, b.x+8, b.y+8, 1, 1, b.flipped)
 	 end
  else
-  cls()
-  print("you win", 64, 64, 7)
+ 	camera(0,0)
+  rectfill(0, 0, 128, 128, 0)
+  print("you win", 52, 64, 3)
+  if not env.game_win_sound_played then
+   sfx(3)
+   env.game_win_sound_played=true
+  end
  end
 end
 
@@ -418,6 +451,9 @@ function move_and_collide_boss(e)
 	 	end
 	 end
 	 
+	 if not plr.attacking then
+	  e.already_attacked_by_plr = false
+	 end
 	 -- register being attacked by player
 	 if plr.attacking then
 	 	local pay1=plr.y-16
@@ -440,9 +476,12 @@ function move_and_collide_boss(e)
 	  local c = ecy1 >= pay1 and ecy1 <= pay2
 	  local d = ecy2 >= pay2 and ecy2 <= pay2
 	  if (a and c) or (a and d) or (b and c) or (b and d) then
-	  	e.life -= 1
-	  	if (e.life < 1) then
-	  	 env.game_won = true
+	  	if not e.already_attacked_by_plr then
+	  	 e.hp -= 1
+	  	 if (e.hp < 1) then
+	  	  env.game_won = true
+	  	 end
+	  	 e.already_attacked_by_plr = true
 	  	end
 	  end
 	 end
@@ -560,6 +599,15 @@ end
 function reset_game()
 	plr.x = 8
 	plr.y = 104
+	for i = 1, #level_1.ground_enemies do
+	 local e = level_1.ground_enemies[i]
+	 e.dead = false
+	end
+	for i = 1, #level_1.flying_enemies do
+	 local e = level_1.flying_enemies[i]
+	 e.dead = false
+	end
+	level_1.boss.hp=3
 	sfx(2)
 end
 
@@ -716,3 +764,4 @@ __sfx__
 00010000093500d35011350133501535017350193501a3501c3501c3501e3500e3001d30000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000100002b3502735025350213501f3501d3501c3501c350000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000002b05025050200502005020050200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0010000023050270502d0502d0502d0502d0502d0502d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
