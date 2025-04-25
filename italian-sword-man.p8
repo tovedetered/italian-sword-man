@@ -39,23 +39,36 @@ env={
 
 
 level_1 = {
-	enemies = {{
+	ground_enemies = {{
 	x=120,
 	y=104,
 	dx=1,
 	sprite=8,
 	flipped=false,
 	dead=false
-},{
+ },{
 	x=312,
 	y=104,
 	dx=1,
 	sprite=8,
 	flipped=false,
 	dead=false
-},},
-	num_enemies = 2,
+ },},
+ flying_enemy = {
+	 x=120,
+	 dx=1,
+	 y=76,
+	 sprite_1=9,
+	 sprite_2=10,
+	 lx=100,
+	 rx=140,
+	 frame=0,
+	 flap_timer=0,
+	 flap_speed=5,
+	 dead=false
+	}
 }
+
 
 -->8
 -- update & draw
@@ -66,12 +79,15 @@ function _update()
 	-- player movement / collision
 	move_and_collide_player()
 	-- enemy movement / collision
-	for i = 1, level_1.num_enemies do
-		enmy = level_1.enemies[i]
-		if (not enmy.dead) then
-		move_and_collide_enemy(enmy)
+	for i = 1, #level_1.ground_enemies do
+		ground_enemy = level_1.ground_enemies[i]
+		if (not ground_enemy.dead) then
+			move_and_collide_enemy(ground_enemy)
 		end
 	end
+	local e = level_1.flying_enemy
+	move_and_collide_flying_enemy(e)
+	
 end
 
 function _draw()
@@ -84,58 +100,26 @@ function _draw()
 	-- draw enemies
 	-- for now we are only using
 	-- level 1
-	for i = 1, level_1.num_enemies do
-		enmy = level_1.enemies[i]
-		if (not enmy.dead) then
-		 spr(enmy.sprite,enmy.x,enmy.y,1,1,enmy.flipped)
+	for i = 1, #level_1.ground_enemies do
+		ground_enemy = level_1.ground_enemies[i]
+		if (not ground_enemy.dead) then
+		 spr(ground_enemy.sprite,ground_enemy.x,ground_enemy.y,1,1,ground_enemy.flipped)
 		end
 	end
-	 print(plr.dy, plr.x, 0)
+	
+	local e = level_1.flying_enemy
+	if e.flipped then
+	 spr(e.sprite_2, e.x, e.y, 1, 1, e.flipped)
+	 spr(e.sprite_1, e.x+8, e.y, 1, 1, e.flipped)
+	else
+	 spr(e.sprite_1, e.x, e.y, 1, 1, e.flipped)
+	 spr(e.sprite_2, e.x+8, e.y, 1, 1, e.flipped)
+	end
 end 
 
 
 -->8
--- collision & physics
-
--- check if player is walking
--- and update player dx 
--- accordingly if they are
-function player_input()
- -- horizontal movement input
- if btn(⬅️) then
-		plr.flipped=true
-		plr.dx=-plr.speed
-	elseif btn(➡️) then
-		plr.flipped=false
-		plr.dx=plr.speed
-	else
-		plr.dx=0
-	end
-	
-	-- vertical movement input
-	if not plr.jumping and btn(🅾️) then
-	 plr.dy=plr.jump_force
-		plr.jumping = true
-	end
-	
-	-- attack input
-	if plr.attacking then
-		if plr.attack_timer < plr.attack_speed then
-			plr.attack_timer+=1
-		else
-			plr.attack_timer=0
-		 if plr.sprite < plr.last_attack_frame then
-				plr.sprite+=1
-			else
-				plr.sprite=plr.passive_sprite
-				plr.attacking=false
-			end
-		end
-	elseif btn(❎) then
-		plr.attacking=true
-		plr.sprite=plr.first_attack_frame
-	end
-end
+-- movement & physics
 
 -- move the player based on
 -- their dx and dy
@@ -156,41 +140,41 @@ function move_and_collide_player()
 		left = plr.x + 3,
 		right = plr.x + 6,
 	}
-end
+ end
 	-- player is 8 pixels tall
-hypox = {
-	left = x_plr.left + plr.dx,
-	right = x_plr.right + plr.dx,
-}
-hypoy = {
-	top = y_plr.top + plr.dy,
-	bottom = y_plr.bottom + plr.dy,
-}
+ hypox = {
+	 left = x_plr.left + plr.dx,
+	 right = x_plr.right + plr.dx,
+ }
+ hypoy = {
+	 top = y_plr.top + plr.dy,
+	 bottom = y_plr.bottom + plr.dy,
+ }
 
--- check bottom edge
-if (solid(x_plr.left, hypoy.bottom - 1) or solid(x_plr.right, hypoy.bottom - 1)) then
-	plr.dy = 0
-	plr.jumping = false
-end
--- check top edge todo:
+ -- check bottom edge
+ if (solid(x_plr.left, hypoy.bottom - 1) or solid(x_plr.right, hypoy.bottom - 1)) then
+	 plr.dy = 0
+	 plr.jumping = false
+ end
+ -- check top edge todo:
 
--- check right edge
-if (solid(x_plr.right + 1, hypoy.bottom - 2) or solid(x_plr.right + 1, hypoy.top - 2)) then
-	if(plr.dx > 0) then
-	plr.dx = 0
-end
-end
+ -- check right edge
+ if (solid(x_plr.right + 1, hypoy.bottom - 2) or solid(x_plr.right + 1, hypoy.top - 2)) then
+	 if(plr.dx > 0) then
+	  plr.dx = 0
+  end
+ end
 
--- check left edge
-if (solid(x_plr.left - 1, hypoy.bottom -2) or solid(x_plr.left - 1, hypoy.top -2)) then
-	if(plr.dx < 0) then
-	 plr.dx = 0
-end
-end
+ -- check left edge
+ if (solid(x_plr.left - 1, hypoy.bottom -2) or solid(x_plr.left - 1, hypoy.top -2)) then
+	 if(plr.dx < 0) then
+	  plr.dx = 0
+  end
+ end
 
 
-plr.y = plr.y + plr.dy
-plr.x = plr.x + plr.dx
+ plr.y = plr.y + plr.dy
+ plr.x = plr.x + plr.dx
 end
 
 -- check if a given (x, y)
@@ -247,9 +231,6 @@ function move_and_collide_enemy(e)
 	  	e.dead = true
 	  end
 	 end
-	   		
-	 		
-	 	
 	 
 	 -- collide with player:
 	 -- setup enemy hitbox
@@ -285,16 +266,175 @@ function move_and_collide_enemy(e)
 	 end
  end
 end
- 	
+
+-- moves and collide flying 
+-- enemies this includes 
+-- colliding with the player 
+-- and taking damage
+function move_and_collide_flying_enemy(e)
+ if (not e.dead) then
+  -- wing flapping animation
+  flying_enemy_animation(e)
+	 -- move back and forth
+	 -- between set x coords
+	 if e.dx > 0 then
+	 	if e.x > e.rx then
+	 	 e.dx=-1
+	 	 e.flipped=false
+	 	else
+	 		e.x+=e.dx
+	 	end
+	 elseif e.dx < 0 then
+	 	if e.x < e.lx then 
+	 		e.dx=1
+	 		e.flipped=true
+	 	else
+	 		e.x+=e.dx
+	 	end
+	 end
+	 
+	 -- register being attacked by player
+	 if plr.attacking then
+	 	local pay1=plr.y-1
+	 	local pay2=plr.y+7
+	 	local pax1=0
+	 	local pax2=0
+	 	if plr.flipped then
+	 		pax2 = plr.x+7
+	 		pax1 = plr.x-8
+	 	else
+	 		pax1 = plr.x
+	 		pax2 = plr.x+16
+	 	end
+	 	local ecx1=e.x
+	  local ecx2=(e.x+15)
+	  local ecy1=e.y
+	  local ecy2=(e.y+7)
+	  local a = ecx1 >= pax1 and ecx1 <= pax2
+	  local b = ecx2 >= pax1 and ecx2 <= pax2
+	  local c = ecy1 >= pay1 and ecy1 <= pay2
+	  local d = ecy2 >= pay2 and ecy2 <= pay2
+	  if (a and c) or (a and d) or (b and c) or (b and d) then
+	  	e.dead = true
+	  end
+	 end
+	 
+	 -- collide with player:
+	 -- setup enemy hitbox
+	 local ecx1=e.x
+	 local ecx2=(e.x+16)
+	 local ecy1=e.y
+	 local ecy2=(e.y+7)
+	 -- setup player hitbox
+	 local pcx1=plr.x
+	 local pcx2=(plr.x+7)
+	 local pcy1=plr.y
+	 local pcy2=(plr.y+7)
+	 if plr.flippped then
+	  pcx1=plr.x+2
+		 pcx2=plr.x+7
+		 pcy1=plr.y
+		 pcy2=plr.y+7
+	 else
+	 	pcx1 = plr.x
+	 	pcx2 = plr.x+5
+	 	pcy1 = plr.y
+	 	pcy2 = plr.y+7
+	 end
+	 -- check for collision with player
+	 local a = pcx1 >= ecx1 and pcx1 <= ecx2
+	 local b = pcx2 >= ecx1 and pcx2 <= ecx2
+	 local c = pcy1 >= ecy1 and pcy1 <= ecy2
+	 local d = pcy2 >= ecy1 and pcy2 <= ecy2
+	 
+	 if (a and c) or (a and d) or (b and c) or (b and d) then
+	 	plr.x = 64
+	 	plr.y = 104
+	 end
+ end
+end
+-->8
+-- input
+-- check if player is walking
+-- and update player dx 
+-- accordingly if they are
+function player_input()
+ -- horizontal movement input
+ if btn(⬅️) then
+		plr.flipped=true
+		plr.dx=-plr.speed
+	elseif btn(➡️) then
+		plr.flipped=false
+		plr.dx=plr.speed
+	else
+		plr.dx=0
+	end
+	
+	-- vertical movement input
+	if not plr.jumping and btn(🅾️) then
+	 plr.dy=plr.jump_force
+		plr.jumping = true
+	end
+	
+	-- attack input
+	if plr.attacking then
+		player_attack_animation()
+	elseif btn(❎) then
+		plr.attacking=true
+		plr.sprite=plr.first_attack_frame
+	end
+end
+-->8
+-- animation
+function player_attack_animation()
+ if plr.attack_timer < plr.attack_speed then
+		plr.attack_timer+=1
+	else
+		plr.attack_timer=0
+		if plr.sprite < plr.last_attack_frame then
+			plr.sprite+=1
+		else
+			plr.sprite=plr.passive_sprite
+			plr.attacking=false
+		end
+	end
+end
+
+function flying_enemy_animation(e)
+ if e.flap_timer < e.flap_speed then
+  e.flap_timer += 1
+ else
+ 	e.flap_timer=0
+ 	if e.frame < 3 then
+ 	 e.frame+=1
+ 	else
+ 	 e.frame=0
+ 	end
+ end
+ if e.frame == 0 then
+ 	e.sprite_1=9
+ 	e.sprite_2=10
+ elseif e.frame == 1 then
+ 	e.sprite_1=11
+ 	e.sprite_2=12
+ elseif e.frame == 2 then
+ 	e.sprite_1=13
+ 	e.sprite_2=14
+ elseif e.frame == 3 then
+  e.sprite_1=11
+  e.sprite_2=12
+ end
+end
+	
 __gfx__
-00000000bbbbbbbb44444444ccccccccd666666600000000000000000000000000077000cccccccccccccccccccccccccccccccccccccccccccccccc77777777
-00000000bb33bb3344444444cccccccc5dddddd604444000044440000444400000777600ccccc777ccccccccccccccccccccccccccccccc7777ccccc77777777
-007007003322332244444444cccccccc5dddddd604fff40004fff40004fff40007776770cccccc7777cccccccccccc7777cccccccccccc7777cccccc77777777
-000770002244224444444444cccccccc5dddddd60f1f10000f1f10000f1f100076661716c99499949994999cc99499949994999cc99499949777799c77777777
+00000000bbbbbbbb44444444ccccccccd66666660000000000000000000000000007700000000000000000000000000000000000000000000000000077777777
+00000000bb33bb3344444444cccccccc5dddddd60444400004444000044440000077760000000777000000000000000000000000000000077770000077777777
+007007003322332244444444cccccccc5dddddd604fff40004fff40004fff4000777677000000077770000000000007777000000000000777700000077777777
+000770002244224444444444cccccccc5dddddd60f1f10000f1f10000f1f10007666171609949994999499900994999499949990099499949777799077777777
 000770004444444444444444cccccccc5dddddd60ffff7000ffff0070ffff0007777776799191999499949999919199949994999991919997777499977777777
-007007004444444444444444cccccccc5dddddd602222700022220700222200077776677c99999977779999cc99999977779999cc99999977779999c77777777
-000000004444444444444444cccccccc5dddddd6f8888400f8888400f888847706667770cccccccc7777cccccccccccccccccccccccccccccccccccc77777777
-000000004444444444444444cccccccc555555dd0f00f0000f00f0000f00f00000777700cccccccccc77cccccccccccccccccccccccccccccccccccc77777777
+007007004444444444444444cccccccc5dddddd60222270002222070022220007777667709999997777999900999999777799990099999977779999077777777
+000000004444444444444444cccccccc5dddddd6f8888400f8888400f88884770666777000000000777700000000000000000000000000000000000077777777
+000000004444444444444444cccccccc555555dd0f00f0000f00f0000f00f0000077770000000000007700000000000000000000000000000000000077777777
 6777777777777776cccccc7777cccccc777777770000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 6777777777777776cccc77777777cccc777777770444400000000000000000000000000000000000000000000000000000000000000000000000000000000000
 c67777777777776cccc7777777777ccc7777777704fff40000000000000000000000000000000000000000000000000000000000000000000000000000000000
