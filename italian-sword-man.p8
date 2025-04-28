@@ -143,7 +143,7 @@ end
 function _draw()
  if not env.game_won then 
   -- update camera
-  camera(min(max(0, plr.x-64), 1024), 0)
+  camera(min(max(0, plr.x-64), 896), 0)
   -- draw the map
 	 map()
 	 -- draw the player
